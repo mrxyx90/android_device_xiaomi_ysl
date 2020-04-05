@@ -23,7 +23,6 @@ PRODUCT_NAME := lineage_ysl
 PRODUCT_BRAND := Xiaomi
 PRODUCT_MODEL := Redmi S2
 PRODUCT_MANUFACTURER := Xiaomi
-TARGET_VENDOR := Xiaomi
 
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 
