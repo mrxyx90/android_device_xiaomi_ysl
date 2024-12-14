@@ -40,5 +40,10 @@ PRODUCT_PACKAGES += \
 # Fingerprint
 $(call soong_config_set,xiaomi_hardware_biometrics,run_32bit,true)
 
+# Fstab
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
+    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
+
 # Call the proprietary setup
 $(call inherit-product, vendor/xiaomi/ysl/ysl-vendor.mk)
