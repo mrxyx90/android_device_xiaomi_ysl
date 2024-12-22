@@ -33,6 +33,6 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
 
 # Security Patch Level
-VENDOR_SECURITY_PATCH := 2018-12-03
+VENDOR_SECURITY_PATCH := 2020-09-01
 
 include vendor/xiaomi/ysl/BoardConfigVendor.mk
