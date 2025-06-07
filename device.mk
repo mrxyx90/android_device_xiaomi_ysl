@@ -38,7 +38,7 @@ PRODUCT_PACKAGES += \
     android.hardware.ir-service.example
 
 # Fingerprint
-$(call soong_config_set,xiaomi_hardware_biometrics,run_32bit,true)
+$(call soong_config_set,XIAOMI_BIOMETRICS_FINGERPRINT,RUN_32BIT,true)
 
 # Fstab
 PRODUCT_COPY_FILES += \
