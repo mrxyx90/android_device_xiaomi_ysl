@@ -1,0 +1,111 @@
+name: Build LineageOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - lineage-22.2
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      ROM_BRANCH: lineage-22.2
+      DEVICE: ysl
+      TZ: Asia/Kolkata
+
+    steps:
+      - name: Checkout device tree
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af || true
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+            git gnupg gperf imagemagick lib32ncurses-dev lib32readline-dev \
+            lib32z1-dev libelf-dev liblz4-tool libncurses5-dev libncurses6 \
+            libncurses-dev libsdl1.2-dev libssl-dev libxml2-utils lzop \
+            pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
+            python3 python-is-python3 openjdk-17-jdk
+
+      - name: Configure ccache
+        run: |
+          mkdir -p ~/.ccache
+          ccache -M 50G
+          ccache -o compression=true
+          ccache -z
+
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl -L https://storage.googleapis.com/git-repo-downloads/repo -o ~/bin/repo
+          chmod +x ~/bin/repo
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Initialize LineageOS source
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lineage"
+          cd "$GITHUB_WORKSPACE/lineage"
+          repo init -u https://github.com/LineageOS/android.git \
+            -b "$ROM_BRANCH" --git-lfs --no-clone-bundle --depth=1
+
+          mkdir -p .repo/local_manifests
+          cat > .repo/local_manifests/ysl.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <manifest>
+            <remote name="github" fetch="https://github.com/" />
+            <project name="mrxyx90/android_device_xiaomi_ysl" path="device/xiaomi/ysl" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_device_xiaomi_msm8953-common" path="device/xiaomi/msm8953-common" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_kernel_xiaomi_msm8953" path="kernel/xiaomi/msm8953" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_ysl" path="vendor/xiaomi/ysl" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_msm8953-common" path="vendor/xiaomi/msm8953-common" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_hardware_xiaomi" path="hardware/xiaomi" remote="github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_hardware_sony_timekeep" path="hardware/sony/timekeep" remote="github" revision="lineage-22.2" />
+          </manifest>
+          EOF
+
+      - name: Sync source
+        run: |
+          cd "$GITHUB_WORKSPACE/lineage"
+          repo sync -c -j2 --force-sync --no-clone-bundle --no-tags
+
+      - name: Build LineageOS
+        run: |
+          cd "$GITHUB_WORKSPACE/lineage"
+          source build/envsetup.sh
+          lunch lineage_${DEVICE}-userdebug
+          mka bacon
+
+      - name: Upload ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: lineage-22.2-${{ env.DEVICE }}
+          path: |
+            lineage/out/target/product/${{ env.DEVICE }}/lineage-*.zip
+            lineage/out/target/product/${{ env.DEVICE }}/boot.img
+            lineage/out/target/product/${{ env.DEVICE }}/dtbo.img
+            lineage/out/target/product/${{ env.DEVICE }}/vendor_boot.img
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ env.DEVICE }}
+          path: |
+            lineage/out/error.log
+            lineage/out/soong.log
+            lineage/out/verbose.log
+          if-no-files-found: ignore
+          retention-days: 7
