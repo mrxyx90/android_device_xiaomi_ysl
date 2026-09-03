@@ -54,8 +54,11 @@ jobs:
 
       - name: Initialize LineageOS source
         run: |
+          set -e
+          rm -rf "$GITHUB_WORKSPACE/lineage"
           mkdir -p "$GITHUB_WORKSPACE/lineage"
           cd "$GITHUB_WORKSPACE/lineage"
+
           repo init -u https://github.com/LineageOS/android.git \
             -b "$ROM_BRANCH" --git-lfs --no-clone-bundle --depth=1
 
@@ -63,21 +66,35 @@ jobs:
           cat > .repo/local_manifests/ysl.xml <<'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <manifest>
-            <remote name="github" fetch="https://github.com/" />
-            <project name="mrxyx90/android_device_xiaomi_ysl" path="device/xiaomi/ysl" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/android_device_xiaomi_msm8953-common" path="device/xiaomi/msm8953-common" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/android_kernel_xiaomi_msm8953" path="kernel/xiaomi/msm8953" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_ysl" path="vendor/xiaomi/ysl" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_msm8953-common" path="vendor/xiaomi/msm8953-common" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/android_hardware_xiaomi" path="hardware/xiaomi" remote="github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/android_hardware_sony_timekeep" path="hardware/sony/timekeep" remote="github" revision="lineage-22.2" />
+            <remote name="ysl-github" fetch="https://github.com/" />
+            <project name="mrxyx90/android_device_xiaomi_ysl" path="device/xiaomi/ysl" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_device_xiaomi_msm8953-common" path="device/xiaomi/msm8953-common" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_kernel_xiaomi_msm8953" path="kernel/xiaomi/msm8953" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_ysl" path="vendor/xiaomi/ysl" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_msm8953-common" path="vendor/xiaomi/msm8953-common" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_hardware_xiaomi" path="hardware/xiaomi" remote="ysl-github" revision="lineage-22.2" />
+            <project name="xiaomi-msm8953-devs/android_hardware_sony_timekeep" path="hardware/sony/timekeep" remote="ysl-github" revision="lineage-22.2" />
           </manifest>
           EOF
 
       - name: Sync source
         run: |
           cd "$GITHUB_WORKSPACE/lineage"
-          repo sync -c -j2 --force-sync --no-clone-bundle --no-tags
+          repo sync -c -j2 --force-sync --no-clone-bundle --no-tags --fail-fast
+
+      - name: Verify Android security patch
+        run: |
+          cd "$GITHUB_WORKSPACE/lineage"
+          source build/envsetup.sh
+          lunch lineage_${DEVICE}-userdebug
+
+          echo "Android Security Patch:"
+          get_build_var PLATFORM_SECURITY_PATCH
+          echo "ro.build.version.security_patch:"
+          get_build_prop ro.build.version.security_patch
+
+          echo "Vendor Security Patch (unchanged):"
+          grep -R "^VENDOR_SECURITY_PATCH" device/xiaomi/ysl device/xiaomi/msm8953-common || true
 
       - name: Build LineageOS
         run: |
