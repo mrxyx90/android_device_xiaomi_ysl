@@ -73,7 +73,7 @@ jobs:
             <project name="xiaomi-msm8953-devs/android_kernel_xiaomi_msm8953" path="kernel/xiaomi/msm8953" remote="ysl-github" revision="lineage-22.2" />
             <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_ysl" path="vendor/xiaomi/ysl" remote="ysl-github" revision="lineage-22.2" />
             <project name="xiaomi-msm8953-devs/proprietary_vendor_xiaomi_msm8953-common" path="vendor/xiaomi/msm8953-common" remote="ysl-github" revision="lineage-22.2" />
-            <project name="xiaomi-msm8953-devs/android_hardware_xiaomi" path="hardware/xiaomi" remote="ysl-github" revision="lineage-22.2" />
+            <project name="LineageOS/android_hardware_xiaomi" path="hardware/xiaomi" remote="lineage-github" revision="lineage-22.2" />
             <project name="LineageOS/android_hardware_sony_timekeep" path="hardware/sony/timekeep" remote="lineage-github" revision="lineage-22.2" />
           </manifest>
           EOF
